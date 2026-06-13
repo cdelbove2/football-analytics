@@ -1,0 +1,31 @@
+version: 2
+
+models:
+  - name: stg_fbref__player_stats
+    description: Cleaned, typed FBref player stats - one row per player/season/competition/squad.
+    columns:
+      - name: fbref_id
+        description: FBref player identifier (placeholder until real ID extraction is added).
+        tests:
+          - not_null
+      - name: player_name
+        tests:
+          - not_null
+      - name: season
+        tests:
+          - not_null
+      - name: age_years
+        description: Player age in years (FBref's "years-days" format truncated to years).
+
+  - name: stg_transfermarkt__player
+    description: Cleaned Transfermarkt player snapshot - one row per player.
+    columns:
+      - name: transfermarkt_id
+        tests:
+          - unique
+          - not_null
+      - name: player_name
+        tests:
+          - not_null
+      - name: market_value_eur
+        description: Latest market value snapshot in EUR.

@@ -1,0 +1,57 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    description: Raw landing tables, close to source shape, loaded by ingestion scripts.
+    tables:
+      - name: fbref_player_stats
+        description: >
+          One row per player per season per competition/squad, as scraped
+          from FBref's standard stats table. Most stats live in the `stats`
+          JSON column.
+        loaded_at_field: _loaded_at
+        columns:
+          - name: fbref_id
+            description: FBref player identifier (placeholder until real ID extraction is added).
+          - name: player_name
+            description: Player name as it appears on FBref.
+          - name: season
+            description: "Season string, e.g. 2024-2025."
+          - name: competition
+            description: Competition name as used in the FBref URL.
+          - name: squad
+            description: Club/squad name.
+          - name: position
+            description: Raw position string from FBref (e.g. 'DF', 'MF,FW').
+          - name: age
+            description: Age as a string (FBref sometimes formats as "25-180").
+          - name: minutes_played
+            description: Minutes played in the given season/competition.
+          - name: stats
+            description: JSON blob of remaining stat columns as scraped.
+
+      - name: transfermarkt_player
+        description: Latest scraped snapshot of player info and market value from Transfermarkt.
+        loaded_at_field: _loaded_at
+
+      - name: transfermarkt_market_value_history
+        description: Time series of market value snapshots per player.
+        loaded_at_field: _loaded_at
+
+      - name: understat_player_stats
+        description: xG-focused player stats per season from Understat.
+        loaded_at_field: _loaded_at
+
+  - name: core
+    schema: core
+    description: Cross-source reference data and the player identity mapping table.
+    tables:
+      - name: player
+        description: >
+          Player identity mapping table - one row per real-world player,
+          linking *_id columns across data sources.
+      - name: position
+        description: Canonical position taxonomy.
+      - name: position_alias
+        description: Maps each source's raw position strings to core.position_code.

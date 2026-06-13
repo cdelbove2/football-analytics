@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  python-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r ingestion/requirements.txt ruff
+      - name: Lint with ruff
+        run: ruff check ingestion/
+
+  dbt-checks:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: football
+          POSTGRES_PASSWORD: football
+          POSTGRES_DB: football
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U football"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dbt
+        run: pip install dbt-postgres
+      - name: Apply raw schema
+        run: |
+          PGPASSWORD=football psql -h localhost -U football -d football -f sql/001_init_raw_schema.sql
+      - name: dbt deps
+        working-directory: dbt
+        run: dbt deps || true
+      - name: dbt debug
+        working-directory: dbt
+        env:
+          DBT_PROFILES_DIR: .
+        run: dbt debug --target ci
+        # NOTE: add a `profiles.yml` (or CI target in profiles.example.yml)
+        # with a `ci` target pointing at localhost:5432 before enabling this
+        # job for real. Left here as a placeholder so the workflow shape is
+        # in place from day one.
+        continue-on-error: true
+      - name: dbt build (staging + intermediate only)
+        working-directory: dbt
+        env:
+          DBT_PROFILES_DIR: .
+        run: dbt build --target ci --select staging intermediate
+        continue-on-error: true

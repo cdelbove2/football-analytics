@@ -1,0 +1,21 @@
+# Example dbt profile for this project.
+#
+# dbt looks for profiles.yml in ~/.dbt/ by default, NOT in the project
+# directory. Copy this content there (merging if you already have other
+# profiles), or point dbt at this file with --profiles-dir.
+#
+# This file is safe to commit since it contains only local dev defaults
+# matching docker-compose.yml - do not put real credentials here.
+
+football_analytics:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: localhost
+      port: 5432
+      user: football
+      password: football
+      dbname: football
+      schema: dbt_dev
+      threads: 4
